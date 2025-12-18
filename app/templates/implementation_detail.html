@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}{{ implementation.title }} - Реализация - ReqImple{% endblock %}
+
+{% block styles %}
+<style>
+    .implementation-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .comments-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .comment {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+
+    .status-badge {
+        font-size: 1rem;
+        padding: 8px 16px;
+    }
+
+    .external-link {
+        word-break: break-all;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Заголовок реализации -->
+    <div class="implementation-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1>{{ implementation.title }}</h1>
+                <div class="d-flex align-items-center text-muted mb-3 flex-wrap">
+                    <div class="me-3">
+                        <i class="bi bi-person"></i>
+                        <a href="{{ url_for('main.profile', username=implementation.author.username) }}"
+                           class="text-decoration-none">
+                            {{ implementation.author.username }}
+                        </a>
+                    </div>
+                    <div class="me-3">
+                        <i class="bi bi-calendar"></i>
+                        {{ implementation.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                    <div class="me-3">
+                        <span class="badge status-badge bg-{{
+                            'success' if implementation.status == 'verified'
+                            else 'warning' if implementation.status == 'pending'
+                            else 'secondary'
+                        }}">
+                            {% if implementation.status == 'verified' %}
+                                ✓ Верифицировано
+                            {% elif implementation.status == 'pending' %}
+                                ⏳ На проверке
+                            {% else %}
+                                Черновик
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Ссылка на родительскую идею -->
+                <div class="alert alert-light mb-3">
+                    <i class="bi bi-lightbulb"></i>
+                    <strong>Реализация идеи:</strong>
+                    <a href="{{ url_for('main.idea_detail', id=implementation.idea.id) }}"
+                       class="text-decoration-none ms-2">
+                        {{ implementation.idea.title }}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Кнопки действий (для автора или администратора) -->
+            {% if current_user.is_authenticated and (current_user.id == implementation.author_id or current_user.is_admin) %}
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Действия
+                </button>
+                <ul class="dropdown-menu">
+                    {% if current_user.is_admin %}
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('main.verify_implementation', id=implementation.id) }}">
+                            <i class="bi bi-check-circle me-2"></i>
+                            {% if implementation.status == 'verified' %}
+                                Снять верификацию
+                            {% else %}
+                                Верифицировать
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#"
+                           onclick="return confirm('Удалить реализацию навсегда?')">
+                            <i class="bi bi-trash me-2"></i> Удалить
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Основная информация -->
+    <div class="row">
+        <!-- Описание и детали -->
+        <div class="col-lg-8">
+            <!-- Описание -->
+            <div class="mb-5">
+                <h3>Описание реализации</h3>
+                <div class="card p-4">
+                    {{ implementation.description|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+
+            <!-- Внешняя ссылка -->
+            <div class="mb-5">
+                <h3>Ссылка на реализацию</h3>
+                <div class="card p-4">
+                    <div class="external-link">
+                        <i class="bi bi-link-45deg"></i>
+                        <a href="{{ implementation.external_url }}" target="_blank" class="text-break">
+                            {{ implementation.external_url }}
+                        </a>
+                        <small class="text-muted d-block mt-1">
+                            (откроется в новом окне)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Боковая панель с информацией -->
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Тип реализации</h5>
+                    <p class="card-text">
+                        {% if implementation.type == 'github_repo' %}
+                            <i class="bi bi-github"></i> GitHub репозиторий
+                        {% elif implementation.type == 'live_demo' %}
+                            <i class="bi bi-play-circle"></i> Демо-версия
+                        {% elif implementation.type == 'article' %}
+                            <i class="bi bi-file-text"></i> Статья/объяснение
+                        {% elif implementation.type == 'prototype' %}
+                            <i class="bi bi-lightning"></i> Прототип
+                        {% else %}
+                            <i class="bi bi-question-circle"></i> Другое
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Информация об авторе -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Автор реализации</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-person-circle" style="font-size: 2rem;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <strong>{{ implementation.author.username }}</strong>
+                            <div class="small text-muted">
+                                Участник с {{ implementation.author.created_at.strftime('%d.%m.%Y') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация об идее -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Исходная идея</h5>
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-lightbulb" style="font-size: 2rem; color: #ffc107;"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <strong>{{ implementation.idea.title }}</strong>
+                            <div class="small text-muted">
+                                Автор: {{ implementation.idea.author.username }}
+                            </div>
+                            <a href="{{ url_for('main.idea_detail', id=implementation.idea.id) }}"
+                               class="btn btn-sm btn-outline-primary mt-2">
+                                Перейти к идее
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Комментарии -->
+    <div class="comments-section">
+        <h3>Обсуждение реализации</h3>
+
+        <!-- Форма комментария -->
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="{{ url_for('main.add_implementation_comment', id=implementation.id) }}" class="mb-4">
+            <div class="mb-3">
+                <textarea name="content" class="form-control" rows="3"
+                          placeholder="Ваш комментарий к реализации..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить комментарий</button>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">
+            <a href="{{ url_for('main.login') }}">Войдите</a> в систему, чтобы оставлять комментарии
+        </div>
+        {% endif %}
+
+        <!-- Список комментариев -->
+        {% if comments %}
+            {% for comment in comments %}
+            <div class="comment card mb-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ comment.author.username }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted me-2">
+                                {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </small>
+
+                            <!-- Кнопка удаления -->
+                            {% if current_user.is_authenticated and current_user.id == comment.author_id %}
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    style="padding: 2px 6px; font-size: 12px;"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal{{ comment.id }}">
+                                ×
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <p class="mb-0 mt-2">{{ comment.content }}</p>
+                </div>
+            </div>
+
+            <!-- Модальное окно для удаления комментария -->
+            <div class="modal fade" id="deleteModal{{ comment.id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">🗑️ Удалить комментарий?</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Вы уверены, что хотите удалить этот комментарий?</p>
+                            <p class="text-muted small">Это действие нельзя отменить.</p>
+                            <div class="alert alert-light mt-3">
+                                <strong>Текст комментария:</strong>
+                                <p class="mb-0 mt-2">{{ comment.content }}</p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <form method="POST" action="{{ url_for('main.delete_implementation_comment', comment_id=comment.id) }}">
+                                <button type="submit" class="btn btn-danger">Удалить</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-muted">Пока нет комментариев к этой реализации. Будьте первым!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

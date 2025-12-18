@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}{{ idea.title }} - ReqImple{% endblock %}
+
+{% block styles %}
+<style>
+    .idea-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .tag {
+        display: inline-block;
+        background: #e9ecef;
+        padding: 5px 12px;
+        border-radius: 20px;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .comments-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+    
+    .comment {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    
+    .implementations-list {
+        margin-top: 30px;
+    }
+    
+    .implementation-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Заголовок идеи -->
+    <div class="idea-header">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1>{{ idea.title }}</h1>
+                <div class="d-flex align-items-center text-muted mb-3">
+                    <div class="me-3">
+                        <i class="bi bi-person"></i>
+                        <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="text-decoration-none">
+                            {{ idea.author.username }}
+                        </a>
+                    </div>
+                    <div>
+                        <i class="bi bi-calendar"></i>
+                        {{ idea.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                    <div class="ms-3">
+                        <span class="badge bg-{{ 'success' if idea.status == 'active' else 'secondary' }}">
+                            {{ 'Активна' if idea.status == 'active' else 'Черновик' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопки действий (для автора) -->
+            {% if current_user.is_authenticated and current_user.id == idea.author_id %}
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    Действия
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('main.edit_idea', id=idea.id) }}">
+                            <i class="bi bi-pencil me-2"></i> Редактировать
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="#" onclick="return confirm('Скрыть идею?')">
+                            <i class="bi bi-eye-slash me-2"></i> Скрыть
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#"
+                           onclick="return confirm('Удалить идею навсегда?')">
+                            <i class="bi bi-trash me-2"></i> Удалить
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Теги -->
+        {% if idea.tags %}
+        <div class="mb-3">
+            {% for tag in idea.tags %}
+            <span class="tag">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Описание идеи -->
+    <div class="mb-5">
+        <h3>Описание</h3>
+        <div class="card p-4">
+            {{ idea.description|replace('\n', '<br>')|safe }}
+        </div>
+    </div>
+    
+    <!-- Реализации -->
+    <div class="implementations-list">
+        <h3>
+            Реализации 
+            <span class="badge bg-primary">{{ idea.implementations|length if idea.implementations else 0 }}</span>
+        </h3>
+        
+        {% if idea.implementations %}
+            {% for implementation in idea.implementations %}
+            <div class="implementation-card">
+                <h5>{{ implementation.title }}</h5>
+                <p>{{ implementation.description[:150] }}...</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <a href="{{ url_for('main.implementation_detail', id=implementation.id) }}"
+                           class="btn btn-sm btn-outline-primary">
+                            Подробнее о реализации
+                        </a>
+                        <small class="text-muted ms-3">
+                            {{ implementation.author.username }}
+                        </small>
+                    </div>
+                    <span class="badge bg-{{ 'success' if implementation.status == 'verified' else 'warning' }}">
+                        {{ 'Верифицировано' if implementation.status == 'verified' else 'На проверке' }}
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                Пока нет реализаций этой идеи. Будьте первым!
+            </div>
+        {% endif %}
+        
+        {% if current_user.is_authenticated %}
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.create_implementation', id=idea.id) }}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Добавить реализацию
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+
+    <!-- Комментарии -->
+    <div class="comments-section">
+        <h3>Комментарии</h3>
+        
+        <!-- Форма комментария -->
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="{{ url_for('main.add_comment', id=idea.id) }}" class="mb-4">
+            <div class="mb-3">
+                <textarea name="content" class="form-control" rows="3" placeholder="Ваш комментарий..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">
+            <a href="{{ url_for('main.login') }}">Войдите</a> в систему, чтобы оставлять комментарии
+        </div>
+        {% endif %}
+        
+        <!-- Список комментариев -->
+{% if comments %}
+    {% for comment in comments %}
+    <div class="comment card mb-2">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <strong>{{ comment.author.username }}</strong>
+                </div>
+                <div class="d-flex align-items-center">
+                    <small class="text-muted me-2">
+                        {{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}
+                    </small>
+
+                    <!-- Кнопка удаления - изменена -->
+                    {% if current_user.is_authenticated and current_user.id == comment.author_id %}
+                    <button type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            style="padding: 2px 6px; font-size: 12px;"
+                            data-bs-toggle="modal"
+                            data-bs-target="#deleteModal{{ comment.id }}">
+                        ×
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            <p class="mb-0 mt-2">{{ comment.content }}</p>
+        </div>
+    </div>
+
+        <!-- Модальное окно для ЭТОГО комментария -->
+        <div class="modal fade" id="deleteModal{{ comment.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">🗑️ Удалить комментарий?</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы уверены, что хотите удалить этот комментарий?</p>
+                        <p class="text-muted small">Это действие нельзя отменить.</p>
+                        <div class="alert alert-light mt-3">
+                            <strong>Текст комментария:</strong>
+                            <p class="mb-0 mt-2">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <form method="POST" action="{{ url_for('main.delete_comment', comment_id=comment.id) }}">
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted">Пока нет комментариев. Будьте первым!</p>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

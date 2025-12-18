@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - ReqImple{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Заголовок -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>💡 Все идеи</h1>
+            <p class="text-muted">Найдите проект для реализации или поделитесь своей идеей</p>
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.create_idea') }}" class="btn btn-primary">
+            + Создать идею
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Список идей -->
+    {% if ideas %}
+        <div class="row">
+            {% for idea in ideas %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <!-- Заголовок и статус -->
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">
+                                <a href="{{ url_for('main.idea_detail', id=idea.id) }}" class="text-decoration-none">
+                                    {{ idea.title }}
+                                </a>
+                            </h5>
+                            <span class="badge bg-{{ 'success' if idea.status == 'active' else 'secondary' }}">
+                                {{ 'Активна' if idea.status == 'active' else 'Черновик' }}
+                            </span>
+                        </div>
+                        
+                        <!-- Описание -->
+                        <p class="card-text text-muted mt-2">
+                            {{ idea.description[:200] }}{% if idea.description|length > 200 %}...{% endif %}
+                        </p>
+                        
+                        <!-- Автор и дата -->
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                            <div>
+                                <small class="text-muted">
+                                    <i class="bi bi-person"></i>
+                                    <a href="{{ url_for('main.profile', username=idea.author.username) }}" 
+                                       class="text-decoration-none">
+                                        {{ idea.author.username }}
+                                    </a>
+                                </small>
+                                <small class="text-muted ms-3">
+                                    <i class="bi bi-calendar"></i>
+                                    {{ idea.created_at.strftime('%d.%m.%Y') }}
+                                </small>
+                            </div>
+                            
+                            <div>
+                                <small class="text-muted me-3">
+                                    <i class="bi bi-chat"></i> {{ idea.comments|length if idea.comments else 0 }}
+                                </small>
+                                <a href="{{ url_for('main.idea_detail', id=idea.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Подробнее →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Пустое состояние -->
+        <div class="text-center py-5 my-5">
+            <div class="mb-4" style="font-size: 48px;">💡</div>
+            <h3 class="mb-3">Пока нет опубликованных идей</h3>
+            <p class="text-muted mb-4">
+                {% if current_user.is_authenticated %}
+                    Будьте первым, кто создаст идею!
+                {% else %}
+                    Войдите в систему, чтобы видеть и создавать идеи
+                {% endif %}
+            </p>
+            
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.create_idea') }}" class="btn btn-primary btn-lg">
+                    Создать первую идею
+                </a>
+            {% else %}
+                <div>
+                    <a href="{{ url_for('main.login') }}" class="btn btn-primary me-2">Войти</a>
+                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary">Регистрация</a>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

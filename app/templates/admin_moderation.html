@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Модерация реализаций - ReqImple{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Модерация реализаций</h1>
+
+    {% if pending %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Автор</th>
+                    <th>Идея</th>
+                    <th>Ссылка</th>
+                    <th>Дата создания</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for implementation in pending %}
+                <tr>
+                    <td>{{ implementation.id }}</td>
+                    <td>
+                        <a href="{{ url_for('main.implementation_detail', id=implementation.id) }}">
+                            {{ implementation.title }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('main.profile', username=implementation.author.username) }}">
+                            {{ implementation.author.username }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('main.idea_detail', id=implementation.idea.id) }}">
+                            {{ implementation.idea.title }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ implementation.external_url }}" target="_blank" class="small">
+                            Перейти →
+                        </a>
+                    </td>
+                    <td>{{ implementation.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td>
+                        <a href="{{ url_for('main.verify_implementation', id=implementation.id) }}"
+                           class="btn btn-sm btn-success">
+                            Верифицировать
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Нет реализаций, ожидающих модерации.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

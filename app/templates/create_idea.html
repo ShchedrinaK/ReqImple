@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}Создать идею - ReqImple{% endblock %}
+
+{% block styles %}
+<style>
+    .idea-form {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    }
+
+    .form-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+    }
+
+    .form-footer {
+        border-top: 2px solid #f0f0f0;
+        padding-top: 20px;
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .char-counter {
+        font-size: 12px;
+        color: #666;
+        text-align: right;
+        margin-top: 5px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+    }
+
+    textarea {
+        resize: vertical;
+        min-height: 150px;
+    }
+
+    .help-text {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="idea-form">
+        <!-- Заголовок -->
+        <div class="form-header">
+            <h1 class="mb-3">💡 Создать новую идею</h1>
+            <p class="text-muted">
+                Поделитесь своей идеей с сообществом. Чем подробнее описание, тем больше шансов найти единомышленников!
+            </p>
+        </div>
+
+        <!-- Сообщения об ошибках/успехе -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'message' else 'info' }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Форма -->
+        <form method="POST" action="{{ url_for('main.create_idea') }}" id="ideaForm">
+            {{ form.hidden_tag() }}
+
+            <!-- Поле: Заголовок -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-type-h1 me-2"></i>Заголовок идеи
+                </label>
+                {{ form.title(id="title", class="form-control form-control-lg", placeholder="...") }}
+                <div class="help-text">
+                    Будьте конкретны. Пример: "Мобильное приложение для учета личных финансов"
+                </div>
+                {% for error in form.title.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+                <div class="char-counter">
+                    <span id="titleCounter">0</span>/200 символов
+                </div>
+            </div>
+
+            <!-- Поле: Описание -->
+            <div class="mb-4">
+                <label class="form-label">
+                    <i class="bi bi-text-paragraph me-2"></i>Подробное описание
+                </label>
+                {{ form.description(class="form-control", placeholder="Опишите вашу идею подробно...", rows="8") }}
+                <div class="help-text">
+                    Расскажите:
+                    <ul class="mb-0">
+                        <li>В чем суть идеи?</li>
+                        <li>Какую проблему она решает?</li>
+                        <li>Кто целевая аудитория?</li>
+                        <li>Какие есть аналоги?</li>
+                    </ul>
+                </div>
+                {% for error in form.description.errors %}
+                    <div class="text-danger small mt-1">{{ error }}</div>
+                {% endfor %}
+                <div class="char-counter">
+                    <span id="descCounter">0</span> символов (минимум 50)
+                </div>
+            </div>
+
+            <!-- Подсказки для хорошего описания -->
+            <div class="alert alert-info mb-4">
+                <h6><i class="bi bi-lightbulb me-2"></i>Советы для хорошего описания:</h6>
+                <ul class="mb-0">
+                    <li>Используйте Markdown для форматирования</li>
+                    <li>Добавьте конкретные примеры</li>
+                    <li>Опишите потенциальные сложности реализации</li>
+                    <li>Укажите, какая помощь нужна (дизайн, программирование, тестирование)</li>
+                </ul>
+            </div>
+
+            <!-- Кнопки -->
+            <div class="form-footer">
+                <div>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Отмена
+                    </a>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Опубликовать идею
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Счетчики символов
+    document.addEventListener('DOMContentLoaded', function() {
+        const titleInput = document.querySelector('#title');
+        const descInput = document.querySelector('#description');
+        const titleCounter = document.querySelector('#titleCounter');
+        const descCounter = document.querySelector('#descCounter');
+
+        // Инициализация счетчиков
+        function updateCounters() {
+            if (titleInput && titleCounter) {
+                titleCounter.textContent = titleInput.value.length;
+            }
+            if (descInput && descCounter) {
+                descCounter.textContent = descInput.value.length;
+            }
+        }
+
+        // Слушаем изменения
+        if (titleInput) {
+            titleInput.addEventListener('input', updateCounters);
+        }
+        if (descInput) {
+            descInput.addEventListener('input', updateCounters);
+        }
+
+        // Первоначальное обновление
+        updateCounters();
+
+        // Предотвращение двойной отправки формы
+        const form = document.querySelector('#ideaForm');
+        if (form) {
+            form.addEventListener('submit', function() {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Публикуем...';
+                }
+            });
+        }
+
+        // Автофокус на поле заголовка
+        if (titleInput) {
+            titleInput.focus();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация - ReqImple</title>
+    <style>
+        body { font-family: Arial; max-width: 500px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #0056b3; }
+        .error { color: red; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Регистрация</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST" action="{{ url_for('main.register') }}">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.email.label }}
+            {{ form.email(size=32) }}
+            {% for error in form.email.errors %}
+                <div class="error">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.username.label }}
+            {{ form.username(size=32) }}
+            {% for error in form.username.errors %}
+                <div class="error">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.display_name.label }}
+            {{ form.display_name(size=32) }}
+            {% for error in form.display_name.errors %}
+                <div class="error">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.password.label }}
+            {{ form.password(size=32) }}
+            {% for error in form.password.errors %}
+                <div class="error">{{ error }}</div>
+            {% endfor %}
+        </div>
+        
+        <button type="submit" class="btn">{{ form.submit.label }}</button>
+    </form>
+    
+    <p style="margin-top: 20px;">
+        Уже есть аккаунт? <a href="{{ url_for('main.login') }}">Войдите</a>
+    </p>
+</body>
+</html>
